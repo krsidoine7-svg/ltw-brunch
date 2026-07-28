@@ -1,0 +1,132 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── Google Fonts ─── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
+
+/* ─── Local Poppins Font ─── */
+@font-face {
+  font-family: 'Poppins';
+  src: url('/Poppins/Poppins-Regular.ttf') format('truetype');
+  font-weight: 400; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: 'Poppins';
+  src: url('/Poppins/Poppins-Medium.ttf') format('truetype');
+  font-weight: 500; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: 'Poppins';
+  src: url('/Poppins/Poppins-SemiBold.ttf') format('truetype');
+  font-weight: 600; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: 'Poppins';
+  src: url('/Poppins/Poppins-Bold.ttf') format('truetype');
+  font-weight: 700; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: 'Poppins';
+  src: url('/Poppins/Poppins-ExtraBold.ttf') format('truetype');
+  font-weight: 800; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: 'Poppins';
+  src: url('/Poppins/Poppins-Black.ttf') format('truetype');
+  font-weight: 900; font-style: normal; font-display: swap;
+}
+
+@layer base {
+  :root {
+    --bg-primary:          #ffffff;
+    --bg-secondary:        #f8f9fa;
+    --bg-dark:             #111111;
+    --color-violet-primary: #6a00c8;
+    --color-violet-dark:   #31005c;
+    --color-yellow-accent: #fce100;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    font-family: 'Poppins', 'Inter', 'Outfit', system-ui, -apple-system, sans-serif;
+    background-color: var(--bg-primary);
+    color: var(--bg-dark);
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
+/* ─── Custom Scrollbar ─── */
+::-webkit-scrollbar        { width: 6px; }
+::-webkit-scrollbar-track  { background: #f1f1f1; }
+::-webkit-scrollbar-thumb  { background: #6a00c8; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #31005c; }
+
+/* ─── Utilities ─── */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(106, 0, 200, 0.1);
+}
+
+.glass-panel-dark {
+  background: rgba(17, 17, 17, 0.88);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(252, 225, 0, 0.2);
+}
+
+.text-gradient-violet {
+  background: linear-gradient(135deg, #6a00c8 0%, #31005c 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.text-gradient-gold {
+  background: linear-gradient(135deg, #fce100 0%, #d4b800 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ─── Infinite Marquee Animations (100% Seamless Continuous Loop) ─── */
+@keyframes marqueeLeft {
+  0% { transform: translateX(0%); }
+  100% { transform: translateX(-100%); }
+}
+
+@keyframes marqueeRight {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(0%); }
+}
+
+.animate-marquee-left {
+  animation: marqueeLeft 55s linear infinite;
+}
+
+.animate-marquee-right {
+  animation: marqueeRight 55s linear infinite;
+}
+
+.group:hover .animate-marquee-left,
+.group:hover .animate-marquee-right {
+  animation-play-state: paused;
+}
+
+/* ─── Scroll-driven section fade-in ─── */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+section {
+  animation: fadeInUp 0.5s ease-out both;
+  animation-timeline: view();
+  animation-range: entry 0% entry 30%;
+}

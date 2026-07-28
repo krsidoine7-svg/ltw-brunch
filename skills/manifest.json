@@ -1,0 +1,37 @@
+{
+  "name": "LTW-BRUNCH Skills Manifest",
+  "version": "1.0.0",
+  "description": "Manifeste de compétences et de compétences spécialisées pour l'application Brunch Light of the World 2e Édition.",
+  "skills": [
+    {
+      "id": "chefskrsidoine7",
+      "name": "Chefskrsidoine7 Manager",
+      "path": "Chefskrsidoine7/SKILL.md",
+      "description": "Orchestrateur multi-agents et gestionnaire de projet central."
+    },
+    {
+      "id": "ticket-canvas-generator",
+      "name": "Ticket Canvas Generator",
+      "path": "src/components/TicketCanvas.tsx",
+      "description": "Génération côté client de tickets rectangulaires au format mobile 350x650px avec QR Code."
+    },
+    {
+      "id": "poster-studio-generator",
+      "name": "Poster Studio & Badges Generator",
+      "path": "src/components/PosterStudio.tsx",
+      "description": "Studio d'upload de photo et d'incrustation de cadres et badges de soutien."
+    },
+    {
+      "id": "make-webhook-dispatcher",
+      "name": "Make Webhook Integration",
+      "path": "src/lib/makeWebhook.ts",
+      "description": "Envoi du payload JSON d'inscription au Webhook Make.com."
+    },
+    {
+      "id": "paystack-integration-blueprint",
+      "name": "Paystack Integration Skill Blueprint",
+      "path": "prompt/INTÉGRATION_PAYSTACK.md",
+      "description": "Spécifications de paiements Mobile Money et Carte Bancaire via Paystack."
+    }
+  ]
+}
