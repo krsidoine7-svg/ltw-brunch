@@ -14,6 +14,7 @@ export interface TicketRegistration {
   registeredAt: string;
   status: 'REGISTERED' | 'VOLUNTEER' | 'CHECKED_IN' | 'CANCELLED';
   isVolunteer?: boolean;
+  volunteerDepartment?: string;
   deleted_at: string | null;
 }
 

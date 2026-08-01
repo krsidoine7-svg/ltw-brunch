@@ -6,6 +6,7 @@ import { ProgramSection } from '@/components/ProgramSection';
 import { TicketGenerator } from '@/components/TicketGenerator';
 import { PosterStudio } from '@/components/PosterStudio';
 import { LocationSection } from '@/components/LocationSection';
+import { DonationSection } from '@/components/DonationSection';
 import { Footer } from '@/components/Footer';
 
 export default function Home() {
@@ -16,6 +17,7 @@ export default function Home() {
       <PosterCarousel />
       <ProgramSection />
       <TicketGenerator />
+      <DonationSection />
       <PosterStudio />
       <LocationSection />
       <Footer />

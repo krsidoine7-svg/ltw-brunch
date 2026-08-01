@@ -187,12 +187,12 @@ export const Hero: React.FC = () => {
                 ].map(({ val, label }) => (
                   <div
                     key={label}
-                    className="flex-1 bg-gradient-to-b from-gray-900 to-dark text-white p-3 rounded-2xl text-center shadow-lg border border-gray-800"
+                    className="flex-1 bg-gradient-to-b from-blue-500 to-blue-800 text-white p-3 rounded-2xl text-center shadow-lg border border-blue-900"
                   >
-                    <span className="block text-2xl font-black text-yellow-accent tabular-nums">
+                    <span className="block text-2xl font-black text-white tabular-nums">
                       {String(val).padStart(2, '0')}
                     </span>
-                    <span className="block text-[10px] text-gray-400 font-semibold uppercase">{label}</span>
+                    <span className="block text-[10px] text-blue-100 font-semibold uppercase">{label}</span>
                   </div>
                 ))}
               </div>

@@ -4,7 +4,7 @@ import React, { useState, useRef } from 'react';
 import QRCode from 'qrcode';
 import { sendToMakeWebhook } from '@/lib/makeWebhook';
 import { TicketRegistration } from '@/lib/types';
-import { Ticket, Download, Share2, Sparkles, User, AlertCircle } from 'lucide-react';
+import { Ticket, Download, Share2, Sparkles, User, AlertCircle, ChevronDown, Camera, Star, Palette, HeartHandshake, Settings, Megaphone, HandHeart } from 'lucide-react';
 
 // Removed getCroppedTemplate as requested
 
@@ -16,6 +16,7 @@ export const TicketGenerator: React.FC = () => {
     phone: '',
     address: '',
     isVolunteer: false,
+    volunteerDepartment: '',
   });
 
   const [loading, setLoading]     = useState(false);
@@ -23,6 +24,17 @@ export const TicketGenerator: React.FC = () => {
   const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
   const [errorMsg, setErrorMsg]   = useState<string | null>(null);
   const [photoUrl, setPhotoUrl]   = useState<string | null>(null);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+  const DEPARTMENTS = [
+    { id: 'Média', label: 'Média', Icon: Camera },
+    { id: 'Influenceur', label: 'Influenceur', Icon: Star },
+    { id: 'Créateur', label: 'Créateur', Icon: Palette },
+    { id: 'Service Accueil', label: 'Service Accueil', Icon: HeartHandshake },
+    { id: 'Organisation', label: 'Organisation', Icon: Settings },
+    { id: 'Communication', label: 'Communication', Icon: Megaphone },
+    { id: 'Serviteur', label: 'Serviteur', Icon: HandHeart },
+  ];
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -253,6 +265,7 @@ export const TicketGenerator: React.FC = () => {
         registeredAt: new Date().toISOString(),
         status:     formData.isVolunteer ? 'VOLUNTEER' : 'REGISTERED',
         isVolunteer: formData.isVolunteer,
+        volunteerDepartment: formData.isVolunteer ? formData.volunteerDepartment : '',
         deleted_at: null,
       };
 
@@ -313,102 +326,151 @@ export const TicketGenerator: React.FC = () => {
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-dark/80 uppercase mb-1">
-                  Photo (Optionnelle)
-                </label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handlePhotoChange}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-violet focus:ring-2 focus:ring-violet/20 outline-none text-sm transition-all bg-white"
-                />
-              </div>
-              {[
-                { name: 'name',      label: 'Nom *',            type: 'text',  placeholder: 'Ex: KOUASSI' },
-                { name: 'firstname', label: 'Prénom * (entrer un seul prénom)', type: 'text',  placeholder: 'Ex: Marie-Esther', pattern: '^\\S+$', title: 'Veuillez entrer un seul prénom (sans espaces)' },
-                { name: 'email',     label: 'Adresse Email *',  type: 'email', placeholder: 'Ex: marie@gmail.com' },
-              ].map((field) => (
-                <div key={field.name}>
-                  <label className="block text-xs font-bold text-dark/80 uppercase mb-1">
-                    {field.label}
-                  </label>
+            <form onSubmit={handleSubmit} className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-dark/80 uppercase mb-1">Nom *</label>
                   <input
-                    type={field.type}
-                    name={field.name}
-                    value={formData[field.name as 'name' | 'firstname' | 'email']}
-                    onChange={handleInputChange}
-                    placeholder={field.placeholder}
-                    required={field.label.includes('*')}
-                    pattern={field.pattern}
-                    title={field.title}
-                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-violet focus:ring-2 focus:ring-violet/20 outline-none text-sm transition-all"
+                    type="text" name="name" value={formData.name} onChange={handleInputChange}
+                    placeholder="Ex: KOUASSI" required
+                    className="w-full px-3 py-2 rounded-xl border border-gray-300 focus:border-violet focus:ring-2 focus:ring-violet/20 outline-none text-sm transition-all"
                   />
                 </div>
-              ))}
+                <div>
+                  <label className="block text-xs font-bold text-dark/80 uppercase mb-1">Prénom *</label>
+                  <input
+                    type="text" name="firstname" value={formData.firstname} onChange={handleInputChange}
+                    placeholder="Un seul prénom" required pattern="^\S+$" title="Veuillez entrer un seul prénom (sans espaces)"
+                    className="w-full px-3 py-2 rounded-xl border border-gray-300 focus:border-violet focus:ring-2 focus:ring-violet/20 outline-none text-sm transition-all"
+                  />
+                </div>
+              </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold text-dark/80 uppercase mb-1">Email *</label>
+                <input
+                  type="email" name="email" value={formData.email} onChange={handleInputChange}
+                  placeholder="Ex: marie@gmail.com" required
+                  className="w-full px-3 py-2 rounded-xl border border-gray-300 focus:border-violet focus:ring-2 focus:ring-violet/20 outline-none text-sm transition-all"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-dark/80 uppercase mb-1">Téléphone</label>
                   <input
-                    type="tel"
-                    name="phone"
-                    value={formData.phone}
-                    onChange={handleInputChange}
+                    type="tel" name="phone" value={formData.phone} onChange={handleInputChange}
                     placeholder="+225 0707070707"
-                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-violet focus:ring-2 focus:ring-violet/20 outline-none text-sm transition-all"
+                    className="w-full px-3 py-2 rounded-xl border border-gray-300 focus:border-violet focus:ring-2 focus:ring-violet/20 outline-none text-sm transition-all"
                   />
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-dark/80 uppercase mb-1">Quartier</label>
                   <input
-                    type="text"
-                    name="address"
-                    value={formData.address}
-                    onChange={handleInputChange}
+                    type="text" name="address" value={formData.address} onChange={handleInputChange}
                     placeholder="Ex: Cocody Angré"
-                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-violet focus:ring-2 focus:ring-violet/20 outline-none text-sm transition-all"
+                    className="w-full px-3 py-2 rounded-xl border border-gray-300 focus:border-violet focus:ring-2 focus:ring-violet/20 outline-none text-sm transition-all"
                   />
                 </div>
               </div>
 
-              {/* ── Volunteer Checkbox ── */}
-              <div className="p-4 rounded-2xl border-2 border-violet/20 bg-violet/5 flex items-start gap-3 cursor-pointer group hover:border-violet/40 transition-all">
-                <input
-                  type="checkbox"
-                  id="isVolunteer"
-                  name="isVolunteer"
-                  checked={formData.isVolunteer}
-                  onChange={handleInputChange}
-                  className="mt-0.5 w-5 h-5 accent-violet rounded cursor-pointer shrink-0"
-                />
-                <label htmlFor="isVolunteer" className="flex flex-col gap-0.5 cursor-pointer">
-                  <span className="text-sm font-bold text-dark group-hover:text-violet transition-colors">
-                    🙋🏽 Voulez-vous servir à ce Brunch en tant que bénévole ?
-                  </span>
-                  <span className="text-[11px] text-gray-500 leading-relaxed">
-                    En cochant cette case, vous signalez votre disponibilité à rejoindre l&apos;équipe de service (accueil, communication, logistique…). L&apos;équipe d&apos;organisation vous contactera.
-                  </span>
+              <div>
+                <label className="block text-xs font-bold text-dark/80 uppercase mb-1">
+                  Photo (Optionnelle)
                 </label>
+                <input
+                  type="file" accept="image/*" onChange={handlePhotoChange}
+                  className="w-full px-3 py-2 rounded-xl border border-gray-300 focus:border-violet focus:ring-2 focus:ring-violet/20 outline-none text-sm transition-all bg-white"
+                />
+              </div>
+
+              {/* ── Volunteer Checkbox ── */}
+              <div className="p-3 rounded-2xl border-2 border-violet/20 bg-violet/5 flex flex-col gap-2 group hover:border-violet/40 transition-all">
+                <div className="flex items-start gap-2 cursor-pointer">
+                  <input
+                    type="checkbox" id="isVolunteer" name="isVolunteer" checked={formData.isVolunteer} onChange={handleInputChange}
+                    className="mt-0.5 w-4 h-4 accent-violet rounded cursor-pointer shrink-0"
+                  />
+                  <label htmlFor="isVolunteer" className="flex flex-col gap-0.5 cursor-pointer">
+                    <span className="text-xs font-bold text-dark group-hover:text-violet transition-colors">
+                      🙋🏽 Voulez-vous servir comme bénévole ?
+                    </span>
+                  </label>
+                </div>
+
+                {formData.isVolunteer && (
+                  <div className="mt-2 pl-6 relative">
+                    <label className="block text-[10px] font-bold text-violet uppercase mb-1">
+                      Choisissez votre département *
+                    </label>
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                        className="w-full px-4 py-2.5 rounded-xl border border-violet/30 bg-white/80 backdrop-blur-sm text-dark font-semibold text-sm focus:outline-none focus:ring-2 focus:ring-violet/40 hover:bg-white transition-all shadow-sm flex items-center justify-between"
+                      >
+                        {formData.volunteerDepartment ? (
+                          <span className="flex items-center gap-2">
+                            {React.createElement(
+                              DEPARTMENTS.find(d => d.id === formData.volunteerDepartment)?.Icon || HandHeart,
+                              { className: "w-4 h-4 text-violet" }
+                            )}
+                            {formData.volunteerDepartment}
+                          </span>
+                        ) : (
+                          <span className="text-gray-400">-- Sélectionner --</span>
+                        )}
+                        <ChevronDown className={`w-4 h-4 text-violet transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
+                      </button>
+
+                      {/* Required validation for the hidden input */}
+                      <input 
+                        type="text" 
+                        required={formData.isVolunteer} 
+                        value={formData.volunteerDepartment} 
+                        className="opacity-0 absolute inset-0 w-full h-full pointer-events-none" 
+                        readOnly 
+                      />
+
+                      {isDropdownOpen && (
+                        <div className="absolute z-10 w-full mt-2 bg-white border border-violet/20 rounded-xl shadow-xl overflow-hidden py-1 max-h-48 overflow-y-auto">
+                          {DEPARTMENTS.map((dept) => (
+                            <button
+                              key={dept.id}
+                              type="button"
+                              onClick={() => {
+                                setFormData({ ...formData, volunteerDepartment: dept.id });
+                                setIsDropdownOpen(false);
+                              }}
+                              className={`w-full px-4 py-2.5 flex items-center gap-3 hover:bg-violet/5 transition-colors ${formData.volunteerDepartment === dept.id ? 'bg-violet/10 text-violet font-bold' : 'text-dark font-medium'}`}
+                            >
+                              <dept.Icon className={`w-4 h-4 ${formData.volunteerDepartment === dept.id ? 'text-violet' : 'text-gray-500'}`} />
+                              <span className="text-sm">{dept.label}</span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Consent notice */}
-              <p className="text-[11px] text-gray-500 leading-relaxed">
-                🔐 Vos données sont transmises de manière sécurisée exclusivement à l&apos;organisation de l&apos;événement (Loi N°2013-450, Côte d&apos;Ivoire).
+              <p className="text-[10px] text-gray-400 leading-tight text-center">
+                🔐 Données sécurisées pour l'organisation de l'événement (Loi N°2013-450).
               </p>
 
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-4 rounded-2xl bg-gradient-to-r from-violet to-violet-dark text-white font-extrabold text-base shadow-xl hover:shadow-violet/40 transition-all hover:scale-[1.02] flex items-center justify-center gap-2 mt-2 cursor-pointer disabled:opacity-60"
+                className="w-full py-3 rounded-2xl bg-gradient-to-r from-violet to-violet-dark text-white font-extrabold text-sm shadow-xl hover:shadow-violet/40 transition-all hover:scale-[1.02] flex items-center justify-center gap-2 mt-1 cursor-pointer disabled:opacity-60"
               >
                 {loading ? (
-                  <span className="animate-spin rounded-full h-5 w-5 border-b-2 border-white" />
+                  <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
                 ) : (
                   <>
-                    <Sparkles className="w-5 h-5 text-yellow-accent" />
-                    Générer mon Ticket Gratuit & Envoyer
+                    <Sparkles className="w-4 h-4 text-yellow-accent" />
+                    Générer mon Ticket Gratuit
                   </>
                 )}
               </button>
@@ -448,6 +510,20 @@ export const TicketGenerator: React.FC = () => {
                     <Share2 className="w-5 h-5" />
                     Inviter un(e) Ami(e) sur WhatsApp
                   </a>
+
+                  {ticket.isVolunteer && (
+                    <a
+                      href={`https://api.whatsapp.com/send?phone=2250576341955&text=${encodeURIComponent(
+                        `Bienvenue dans le département ${ticket.volunteerDepartment}.`
+                      )}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full py-3.5 rounded-xl bg-violet hover:bg-violet-dark text-white font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2"
+                    >
+                      <Share2 className="w-5 h-5" />
+                      Rejoindre le Groupe WhatsApp Bénévoles
+                    </a>
+                  )}
                 </div>
               )}
             </div>
