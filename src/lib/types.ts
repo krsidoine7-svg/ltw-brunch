@@ -34,7 +34,7 @@ export interface ProgramItem {
   description: string;
   speaker?: string;
   speakerRole?: string;
-  category: 'Ouverture' | 'Écoute & Partage' | 'Restauration' | 'Clôture';
+  category: 'Accueil' | 'Prière & Adoration' | 'Partage & Enseignement' | 'Repas & Activités' | 'Clôture';
   isKeynote?: boolean;
 }
 

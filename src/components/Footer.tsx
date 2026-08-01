@@ -98,14 +98,15 @@ export const Footer: React.FC = () => {
               Une question ? Besoin de la géolocalisation ou d&apos;informations pratiques ? Notre équipe est disponible sur WhatsApp.
             </p>
 
+
             <a
-              href="https://wa.me/2250576341955"
+              href="https://chat.whatsapp.com/HT9FRLWQAHt9pKRLMZ2UPr"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-sm shadow-lg transition-all hover:scale-[1.02]"
+              className="flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-[#25D366] hover:bg-[#128C7E] text-white font-extrabold text-sm shadow-lg transition-all hover:scale-[1.02]"
             >
               <MessageCircle className="w-5 h-5" />
-              Infoline : 05 76 34 19 55
+              Rejoindre le Groupe WhatsApp
             </a>
  
 

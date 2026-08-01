@@ -219,7 +219,12 @@ export const Hero: React.FC = () => {
           </div>
 
           {/* ── Image Slider (5 cols) ── */}
-          <div className="lg:col-span-5 flex flex-col items-center justify-center gap-4">
+          <div className="lg:col-span-5 flex flex-col items-center justify-center gap-4 relative">
+            
+            {/* Ticket Floating Decoration */}
+            <div className="hidden lg:block absolute -left-16 top-10 z-20 w-40 -rotate-[20deg] shadow-2xl rounded-xl overflow-hidden border-4 border-white/80 pointer-events-none hover:scale-105 transition-transform duration-500">
+              <img src="/ex-rendu-ticket.jpg" alt="Ticket Brunch" className="w-full h-auto" />
+            </div>
 
             {/* Slider Card */}
             <div className="relative w-full max-w-md group">

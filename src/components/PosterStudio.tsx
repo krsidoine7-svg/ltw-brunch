@@ -270,9 +270,8 @@ export const PosterStudio: React.FC = () => {
           {/* Canvas Preview */}
           <div className="lg:col-span-6 flex flex-col items-center justify-center">
             <div className="bg-slate-950 p-4 sm:p-5 rounded-3xl shadow-2xl border-4 border-slate-900 max-w-[400px] w-full text-center">
-              <div className="flex items-center justify-between mb-4 px-2 text-xs text-gray-400">
-                <span className="font-bold text-yellow-accent">APERÇU AFFICHE HD</span>
-                <span>1080 × 1080 px</span>
+              <div className="flex items-center justify-center mb-4 px-2 text-xs text-gray-400">
+                <span className="font-bold text-yellow-accent">APERÇU AFFICHE</span>
               </div>
 
               <div className="overflow-hidden rounded-2xl border border-white/20 shadow-xl bg-slate-900 flex justify-center">
@@ -291,31 +290,18 @@ export const PosterStudio: React.FC = () => {
                   className="w-full py-3.5 rounded-xl bg-yellow-accent text-dark font-black text-sm shadow-md hover:opacity-90 transition-all flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <Download className="w-5 h-5" />
-                  Télécharger mon Affiche HD (PNG)
+                  Télécharger mon Affiche
                 </button>
 
-                <div className="grid grid-cols-2 gap-3">
-                  <a
-                    href={`https://api.whatsapp.com/send?text=${encodeURIComponent(
-                      `Je soutiens la 2ᵉ Édition du Brunch Light of the World sous le thème « LA GUÉRISON DES VICTIMES DE VIOLS » ! Viens participer le 14/08/2026 à HETEC Dokui : ${siteUrl}`
-                    )}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-1.5"
-                  >
-                    <Share2 className="w-4 h-4" />
-                    Partager WhatsApp
-                  </a>
-                  <a
-                    href="https://wa.me/2250576341955"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="py-3 rounded-xl bg-violet hover:opacity-90 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-1.5"
-                  >
-                    <Share2 className="w-4 h-4" />
-                    Envoyer à LTW
-                  </a>
-                </div>
+                <a
+                  href="https://chat.whatsapp.com/HT9FRLWQAHt9pKRLMZ2UPr"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full py-3.5 rounded-xl bg-[#25D366] hover:bg-[#128C7E] text-white font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2"
+                >
+                  <Share2 className="w-5 h-5" />
+                  Rejoindre le Groupe WhatsApp
+                </a>
               </div>
             </div>
           </div>

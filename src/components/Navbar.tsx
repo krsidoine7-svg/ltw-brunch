@@ -67,24 +67,17 @@ export const Navbar: React.FC = () => {
 
         {/* CTA Actions */}
         <div className="hidden md:flex items-center gap-4">
-          <a
-            href="https://wa.me/2250576341955?text=Bonjour,%20je%20souhaite%20des%20informations%20sur%20le%20Brunch%20Light%20of%20the%20World"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-md transition-all hover:scale-105"
-          >
-            <MessageCircle className="w-4 h-4" />
-            WhatsApp Info
-          </a>
 
           <a
-            href="https://forms.gle/u4BeKn4n6MeRCjk89"
+            href="https://chat.whatsapp.com/HT9FRLWQAHt9pKRLMZ2UPr"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-black bg-yellow-accent text-dark shadow-md hover:scale-105 transition-all border border-yellow-400"
+            className="flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold bg-[#25D366] hover:bg-[#128C7E] text-white shadow-md transition-all hover:scale-105"
           >
-            ✍🏽 S&apos;inscrire
+            <MessageCircle className="w-4 h-4" />
+            Groupe WhatsApp
           </a>
+
 
           <a
             href="#ticket"
@@ -144,24 +137,17 @@ export const Navbar: React.FC = () => {
             Lieu & Horaires
           </a>
           <div className="pt-4 border-t border-gray-100 flex flex-col gap-3">
+
             <a
-              href="https://wa.me/2250576341955"
+              href="https://chat.whatsapp.com/HT9FRLWQAHt9pKRLMZ2UPr"
               target="_blank"
               rel="noopener noreferrer"
-              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-bold bg-emerald-600 text-white"
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-bold bg-[#25D366] hover:bg-[#128C7E] text-white shadow-md"
             >
               <MessageCircle className="w-5 h-5" />
-              WhatsApp Info (0576341955)
+              Rejoindre le Groupe WhatsApp
             </a>
-            <a
-              href="https://forms.gle/u4BeKn4n6MeRCjk89"
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={() => setMobileMenuOpen(false)}
-              className="w-full text-center py-3 rounded-xl font-black bg-yellow-accent text-dark shadow-md"
-            >
-              ✍🏽 S&apos;inscrire au Formulaire Officiel
-            </a>
+
             <a
               href="#ticket"
               onClick={() => setMobileMenuOpen(false)}
