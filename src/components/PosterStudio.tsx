@@ -40,114 +40,105 @@ export const PosterStudio: React.FC = () => {
       img.src = src;
     });
 
+  /* ── Canvas object-fit helper avec Zoom Out ── */
+  const drawCoverImage = (
+    ctx: CanvasRenderingContext2D,
+    img: HTMLImageElement | HTMLCanvasElement,
+    x: number,
+    y: number,
+    w: number,
+    h: number
+  ) => {
+    const imgRatio = img.width / img.height;
+    const canvasRatio = w / h;
+    let renderW, renderH, offsetX = 0, offsetY = 0;
+
+    if (imgRatio > canvasRatio) {
+      renderH = h;
+      renderW = img.width * (h / img.height);
+    } else {
+      renderW = w;
+      renderH = img.height * (w / img.width);
+    }
+    
+    // Dé-zoom de 60% comme demandé (il reste donc 40% de la taille d'origine)
+    const zoom = 0.4;
+    renderW *= zoom;
+    renderH *= zoom;
+    
+    offsetX = (w - renderW) / 2;
+    offsetY = (h - renderH) / 2;
+
+    ctx.drawImage(img, x + offsetX, y + offsetY, renderW, renderH);
+  };
+
   const renderPoster = async (photoSrc: string | null, badge: BadgeConfig, name: string) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    canvas.width  = 1080;
-    canvas.height = 1080;
+    try {
+      const templateImg = await loadImage('/jserai-template.jpg');
+      
+      const W = templateImg.width;
+      const H = templateImg.height;
+      canvas.width = W;
+      canvas.height = H;
 
-    /* Background gradient */
-    const bg = ctx.createLinearGradient(0, 0, 1080, 1080);
-    bg.addColorStop(0,   '#31005C');
-    bg.addColorStop(0.5, '#6A00C8');
-    bg.addColorStop(1,   '#111111');
-    ctx.fillStyle = bg;
-    ctx.fillRect(0, 0, 1080, 1080);
+      // Dessiner le fond (qui contient déjà le titre, la date, etc.)
+      ctx.drawImage(templateImg, 0, 0, W, H);
 
-    /* Soft glow circles */
-    ctx.save();
-    ctx.globalAlpha = 0.18;
-    ctx.fillStyle = '#FCE100';
-    ctx.beginPath(); ctx.arc(900, 180, 260, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#FFFFFF';
-    ctx.beginPath(); ctx.arc(160, 860, 200, 0, Math.PI * 2); ctx.fill();
-    ctx.restore();
-
-    /* ── User Photo Circle ── */
-    const avatarX = 540, avatarY = 310, avatarR = 175;
-
-    ctx.save();
-    ctx.beginPath();
-    ctx.arc(avatarX, avatarY, avatarR, 0, Math.PI * 2);
-    ctx.clip();
-
-    if (photoSrc) {
-      try {
+      // Dessiner la photo (masquée) à gauche
+      if (photoSrc) {
         const photo = await loadImage(photoSrc);
-        const side  = Math.min(photo.width, photo.height);
-        const sx    = (photo.width  - side) / 2;
-        const sy    = (photo.height - side) / 2;
-        ctx.drawImage(photo, sx, sy, side, side,
-          avatarX - avatarR, avatarY - avatarR, avatarR * 2, avatarR * 2);
-      } catch {
-        ctx.fillStyle = '#4c1d95';
-        ctx.fillRect(avatarX - avatarR, avatarY - avatarR, avatarR * 2, avatarR * 2);
+        const mask = await loadImage('/jseraimask.png');
+        
+        ctx.save();
+        
+        // On garde les proportions EXACTES du masque (jseraimask.png)
+        const maskRatio = mask.width / mask.height;
+        const photoH = H * 1.175; // Augmenté de +200px (dépasse l'écran si H=1080)
+        const photoW = photoH * maskRatio;
+        
+        // Coordonnées pour centrer dans le cadre violet
+        const photoX = W * -0.045; // Ajusté à gauche pour compenser
+        const photoY = H * -0.087;  // Ajusté vers le haut pour compenserre
+        
+        const off = document.createElement('canvas');
+        off.width = photoW;
+        off.height = photoH;
+        const offCtx = off.getContext('2d');
+        
+        if (offCtx) {
+          drawCoverImage(offCtx, photo, 0, 0, photoW, photoH);
+          
+          offCtx.globalCompositeOperation = 'destination-in';
+          offCtx.drawImage(mask, 0, 0, photoW, photoH);
+          
+          ctx.drawImage(off, photoX, photoY);
+        }
+        
+        ctx.restore();
       }
-    } else {
-      ctx.fillStyle = '#4c1d95';
-      ctx.fillRect(avatarX - avatarR, avatarY - avatarR, avatarR * 2, avatarR * 2);
-      ctx.fillStyle = '#FFFFFF';
-      ctx.font      = 'bold 22px sans-serif';
+
+      // Dessiner le nom du participant (à droite)
       ctx.textAlign = 'center';
-      ctx.fillText('VOTRE PHOTO ICI', avatarX, avatarY + 8);
+      ctx.fillStyle = '#FCE100'; // Jaune pour mieux ressortir
+      ctx.font      = 'bold 45px "Inter", sans-serif';
+      
+      const nameX = W * 0.73; // 73% (milieu de la zone droite)
+      const nameY = H * 0.52; // 52% (légèrement plus bas pour éviter de toucher le texte au-dessus)
+      
+      ctx.fillText(name.toUpperCase(), nameX, nameY);
+
+      setIsGenerated(true);
+    } catch (err) {
+      console.error('Error drawing poster:', err);
     }
-    ctx.restore();
-
-    /* Circle border Gold */
-    ctx.strokeStyle = '#FCE100';
-    ctx.lineWidth   = 8;
-    ctx.beginPath();
-    ctx.arc(avatarX, avatarY, avatarR + 4, 0, Math.PI * 2);
-    ctx.stroke();
-
-    /* ── Text Zone ── */
-    ctx.textAlign = 'center';
-
-    /* Participant Name */
-    ctx.fillStyle = '#FFFFFF';
-    ctx.font      = 'bold 50px sans-serif';
-    ctx.fillText(name.toUpperCase(), 540, 565);
-
-    /* Official Participant Tag Pill */
-    ctx.fillStyle   = '#FCE100';
-    ctx.beginPath(); ctx.roundRect(330, 595, 420, 48, 24); ctx.fill();
-    ctx.fillStyle   = '#111111';
-    ctx.font        = 'bold 23px sans-serif';
-    ctx.fillText('JE SERAI PRÉSENT(E) !', 540, 627);
-
-    /* Event Title & Theme */
-    ctx.fillStyle = '#FFFFFF';
-    ctx.font      = 'bold 34px sans-serif';
-    ctx.fillText('BRUNCH LIGHT OF THE WORLD', 540, 705);
-
-    ctx.fillStyle = '#FCE100';
-    ctx.font      = 'bold 26px sans-serif';
-    ctx.fillText('LA GUÉRISON DES VICTIMES DE VIOLS', 540, 742);
-
-    /* Bible Verse */
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
-    ctx.font      = 'italic 16px sans-serif';
-    ctx.fillText('“Il guérit ceux qui ont le cœur brisé, et panse leurs blessures.” — Psaume 147:3', 540, 775);
-
-    /* Footer strip */
-    ctx.fillStyle = 'rgba(0,0,0,0.45)';
-    ctx.beginPath(); ctx.roundRect(60, 830, 960, 84, 20); ctx.fill();
-
-    ctx.fillStyle = '#FFFFFF';
-    ctx.font      = 'bold 23px sans-serif';
-    ctx.fillText('📅 14 AOÛT 2026 · 08H30   |   📍 HETEC DOKUI, ABIDJAN', 540, 868);
-
-    ctx.fillStyle = '#FCE100';
-    ctx.font      = 'bold 17px sans-serif';
-    ctx.fillText('DRESS CODE :  FEMME 💜 VIOLET   |   GARÇON 💛 JAUNE', 540, 896);
-
-    setIsGenerated(true);
   };
 
-  /* ── Synchronize Name from Registration Form in Real Time ── */
+  /* ── Synchronize Name and Photo from Registration Form in Real Time ── */
   useEffect(() => {
     const handleNameSync = (e: Event) => {
       const customEvent = e as CustomEvent<string>;
@@ -156,15 +147,24 @@ export const PosterStudio: React.FC = () => {
       void renderPoster(userImageSrc, selectedBadge, newName);
     };
 
+    const handlePhotoSync = (e: Event) => {
+      const customEvent = e as CustomEvent<string>;
+      const newPhoto = customEvent.detail;
+      setUserImageSrc(newPhoto);
+      void renderPoster(newPhoto, selectedBadge, participantName);
+    };
+
     if (typeof window !== 'undefined') {
       window.addEventListener('ltw-name-sync', handleNameSync);
+      window.addEventListener('ltw-photo-sync', handlePhotoSync);
     }
     return () => {
       if (typeof window !== 'undefined') {
         window.removeEventListener('ltw-name-sync', handleNameSync);
+        window.removeEventListener('ltw-photo-sync', handlePhotoSync);
       }
     };
-  }, [userImageSrc, selectedBadge]);
+  }, [userImageSrc, selectedBadge, participantName]);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -201,7 +201,7 @@ export const PosterStudio: React.FC = () => {
   const siteUrl = typeof window !== 'undefined' ? window.location.href : 'https://brunch-ltw.ci';
 
   return (
-    <section id="studio" className="py-20 bg-gradient-to-b from-white via-purple-50/50 to-white relative">
+    <section id="studio" className="hidden py-20 bg-gradient-to-b from-white via-purple-50/50 to-white relative">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
 
         {/* Section Header */}

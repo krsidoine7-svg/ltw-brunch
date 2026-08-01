@@ -6,6 +6,8 @@ import { sendToMakeWebhook } from '@/lib/makeWebhook';
 import { TicketRegistration } from '@/lib/types';
 import { Ticket, Download, Share2, Sparkles, User, AlertCircle } from 'lucide-react';
 
+// Removed getCroppedTemplate as requested
+
 export const TicketGenerator: React.FC = () => {
   const [formData, setFormData] = useState({
     name: '',
@@ -20,11 +22,18 @@ export const TicketGenerator: React.FC = () => {
   const [ticket, setTicket]       = useState<TicketRegistration | null>(null);
   const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
   const [errorMsg, setErrorMsg]   = useState<string | null>(null);
+  const [photoUrl, setPhotoUrl]   = useState<string | null>(null);
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type, checked } = e.target;
+    let { name, value, type, checked } = e.target;
+    
+    // Empêcher la saisie d'espaces dans le prénom
+    if (name === 'firstname') {
+      value = value.replace(/\s/g, '');
+    }
+
     const updated = { ...formData, [name]: type === 'checkbox' ? checked : value };
     setFormData(updated);
 
@@ -32,6 +41,19 @@ export const TicketGenerator: React.FC = () => {
       const fullName = `${updated.firstname} ${updated.name}`.trim();
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('ltw-name-sync', { detail: fullName }));
+      }
+    }
+  };
+
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      const url = URL.createObjectURL(file);
+      setPhotoUrl(url);
+      
+      // Synchronisation vers l'affiche officielle
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('ltw-photo-sync', { detail: url }));
       }
     }
   };
@@ -49,7 +71,7 @@ export const TicketGenerator: React.FC = () => {
   /* ── Canvas object-fit: cover helper (no deformation) ── */
   const drawCoverImage = (
     ctx: CanvasRenderingContext2D,
-    img: HTMLImageElement,
+    img: HTMLImageElement | HTMLCanvasElement,
     x: number,
     y: number,
     w: number,
@@ -73,7 +95,7 @@ export const TicketGenerator: React.FC = () => {
   /* ── Canvas object-fit: contain helper (no deformation) ── */
   const drawContainImage = (
     ctx: CanvasRenderingContext2D,
-    img: HTMLImageElement,
+    img: HTMLImageElement | HTMLCanvasElement,
     x: number,
     y: number,
     maxW: number,
@@ -94,191 +116,103 @@ export const TicketGenerator: React.FC = () => {
     ctx.drawImage(img, dx, dy, w, h);
   };
 
-  /* ── Canvas Ticket Renderer (Horizontal Landscape Coupon 1200×500 px) ── */
-  const renderTicket = async (t: TicketRegistration, qrUrl: string) => {
+  /* ── Canvas Ticket Renderer (Using the uploaded design template) ── */
+  const renderTicket = async (t: TicketRegistration, qrUrl: string, userPhotoUrl?: string) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const W = 1200, H = 500;
-    const stubX = 840; // Right stub starts at X=840 (Width: 360px)
-
-    canvas.width  = W;
+    // Fix internal resolution for high quality
+    const W = 1500;
+    const H = 1000;
+    canvas.width = W;
     canvas.height = H;
 
-    /* Base Fill */
+    // Fill background with white
     ctx.fillStyle = '#FFFFFF';
     ctx.fillRect(0, 0, W, H);
 
-    /* ── LEFT MAIN SECTION (0 -> 840) — Official LTW Poster Background ── */
-    /* Step 1: Deep violet base gradient (matching official poster) */
-    const bgGrad = ctx.createLinearGradient(0, 0, stubX, H);
-    bgGrad.addColorStop(0,   '#2A0055');
-    bgGrad.addColorStop(0.4, '#5500AA');
-    bgGrad.addColorStop(1,   '#1A0033');
-    ctx.fillStyle = bgGrad;
-    ctx.fillRect(0, 0, stubX, H);
+    try {
+      const templateImg = await loadImg('/design ticket.png');
+      // Using ctx.drawImage ensures the entire template fits the canvas without any cropping
+      ctx.drawImage(templateImg, 0, 0, W, H);
 
-    /* Step 2: Soft white misty foam blobs — MORE WHITE, denser effect */
-    const blobs = [
-      { x: 85,  y: 80,  r: 150, a: 0.45 },
-      { x: 380, y: 55,  r: 120, a: 0.30 },
-      { x: 620, y: 140, r: 180, a: 0.25 },
-      { x: 200, y: 340, r: 140, a: 0.35 },
-      { x: 480, y: 400, r: 160, a: 0.22 },
-      { x: 760, y: 300, r: 130, a: 0.20 },
-      { x: 700, y: 30,  r: 110, a: 0.28 },
-      { x: 50,  y: 420, r: 100, a: 0.40 },
-      { x: 310, y: 200, r: 130, a: 0.18 },
-      { x: 820, y: 80,  r:  90, a: 0.25 },
-    ];
+      // 1. Draw user photo over the left white blob
+      if (userPhotoUrl) {
+        const photo = await loadImg(userPhotoUrl);
+        const mask = await loadImg('/mask.png');
+        ctx.save();
+        
+        // Coordonnées ajustées pour décaler vers la gauche
+        const photoX = -10;
+        const photoY = 50;
+        const photoW = 380;
+        const photoH = 840;
+        
+        // Création d'un canvas offscreen pour appliquer le masque
+        const off = document.createElement('canvas');
+        off.width = photoW;
+        off.height = photoH;
+        const offCtx = off.getContext('2d');
+        
+        if (offCtx) {
+          // Dessine la photo
+          drawCoverImage(offCtx, photo, 0, 0, photoW, photoH);
+          
+          // Applique le masque en utilisant l'alpha de mask.png
+          offCtx.globalCompositeOperation = 'destination-in';
+          offCtx.drawImage(mask, 0, 0, photoW, photoH);
+          
+          // Redessine l'image en multiply pour conserver la bordure jaune de mask.png si elle existe
+          // (le blanc de l'image de masque devient transparent sur la photo)
+          offCtx.globalCompositeOperation = 'multiply';
+          offCtx.drawImage(mask, 0, 0, photoW, photoH);
+          
+          // Dessine le résultat final sur le canvas principal
+          ctx.drawImage(off, photoX, photoY);
+        }
+        
+        ctx.restore();
+      }
 
-    for (const blob of blobs) {
-      const radGrad = ctx.createRadialGradient(blob.x, blob.y, 0, blob.x, blob.y, blob.r);
-      radGrad.addColorStop(0,   `rgba(255, 255, 255, ${blob.a})`);
-      radGrad.addColorStop(0.4, `rgba(220, 190, 255, ${blob.a * 0.6})`);
-      radGrad.addColorStop(1,   'rgba(255, 255, 255, 0)');
-      ctx.fillStyle = radGrad;
-      ctx.beginPath();
-      ctx.arc(blob.x, blob.y, blob.r, 0, Math.PI * 2);
-      ctx.fill();
+      // 3. Dessiner le nom du participant (sans fond jaune)
+      // On décale nameBoxX vers la gauche et on augmente la taille
+      const nameBoxX = 450;
+      const nameBoxY = 490;
+      const nameBoxW = 450;
+      const nameBoxH = 70;
+
+      ctx.fillStyle = '#1D083E';
+      ctx.font = '900 60px "Inter", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(`${t.firstname.toUpperCase()} ${t.name.toUpperCase()}`, nameBoxX + nameBoxW / 2, nameBoxY + 55);
+
+      // 4. Mask the {{LE CODE QR}} placeholder and draw the QR
+      const qrBoxX = 1120;
+      const qrBoxY = 320;
+      const qrBoxW = 320;
+      const qrBoxH = 320;
+      
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(qrBoxX, qrBoxY, qrBoxW, qrBoxH);
+      
+      const qrImg = await loadImg(qrUrl);
+      ctx.drawImage(qrImg, qrBoxX + 10, qrBoxY + 10, qrBoxW - 20, qrBoxH - 20);
+
+      // 5. Optionally override the "Entrée libre" if Volunteer
+      if (t.status === 'VOLUNTEER') {
+        ctx.fillStyle = '#FCE100'; // Yellow background 
+        ctx.fillRect(1050, 750, 400, 100);
+        ctx.fillStyle = '#31005C';
+        ctx.font = 'bold 35px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('ÉQUIPE BÉNÉVOLE', 1250, 810);
+      }
+
+    } catch (err) {
+      console.error('Error drawing template:', err);
     }
-
-    /* Left Image Thumbnail (object-fit: cover, perfectly proportional) */
-    try {
-      const coverImg = await loadImg('/img-prin-couleur.png');
-      ctx.save();
-      ctx.beginPath();
-      ctx.roundRect(25, 25, 195, H - 50, 16);
-      ctx.clip();
-      drawCoverImage(ctx, coverImg, 25, 25, 195, H - 50);
-      ctx.restore();
-
-      ctx.strokeStyle = '#FCE100';
-      ctx.lineWidth   = 3;
-      ctx.beginPath(); ctx.roundRect(25, 25, 195, H - 50, 16); ctx.stroke();
-    } catch { /* optional */ }
-
-    /* Text Content Left Offset */
-    const contentX = 245;
-
-    /* Top Subtitle Pill */
-    ctx.textAlign = 'left';
-    ctx.fillStyle = '#FCE100';
-    ctx.font      = 'bold 15px sans-serif';
-    ctx.fillText('✨ INVITATION OFFICIELLE — 2ᵉ ÉDITION ✨', contentX, 60);
-
-    /* Big Title */
-    ctx.fillStyle = '#FFFFFF';
-    ctx.font      = 'black 34px sans-serif';
-    ctx.fillText('BRUNCH LIGHT OF THE WORLD', contentX, 105);
-
-    /* Subtheme */
-    ctx.fillStyle = '#FCE100';
-    ctx.font      = 'bold 22px sans-serif';
-    ctx.fillText('LA GUÉRISON DES VICTIMES DE VIOLS', contentX, 138);
-
-    /* Participant Name Box */
-    ctx.fillStyle   = 'rgba(255, 255, 255, 0.12)';
-    ctx.strokeStyle = 'rgba(252, 225, 0, 0.4)';
-    ctx.lineWidth   = 1.5;
-    ctx.beginPath(); ctx.roundRect(contentX, 162, 565, 105, 16); ctx.fill(); ctx.stroke();
-
-    ctx.fillStyle = '#E9D5FF';
-    ctx.font      = 'bold 13px sans-serif';
-    ctx.fillText('TITULAIRE DU BILLET :', contentX + 22, 192);
-
-    /* Participant Name in BIG UPPERCASE ONLY */
-    ctx.fillStyle = '#FFFFFF';
-    ctx.font      = 'black 32px sans-serif';
-    ctx.fillText(`${t.firstname.toUpperCase()} ${t.name.toUpperCase()}`, contentX + 22, 235);
-
-    /* Dress Code Strip */
-    ctx.fillStyle = '#FCE100';
-    ctx.beginPath(); ctx.roundRect(contentX, 295, 565, 46, 12); ctx.fill();
-    ctx.fillStyle = '#111111';
-    ctx.font      = 'bold 15px sans-serif';
-    ctx.fillText('👗 DRESS CODE :  FEMME 💜 VIOLET   |   GARÇON 💛 JAUNE', contentX + 20, 324);
-
-    /* Bottom Partner Logos (object-fit: contain, perfectly proportional) */
-    try {
-      const logo1 = await loadImg('/logo-removebg.png');
-      drawContainImage(ctx, logo1, contentX, 365, 75, 75);
-
-      const logo2 = await loadImg('/patenaire-light.png');
-      drawContainImage(ctx, logo2, contentX + 90, 365, 130, 75);
-    } catch { /* optional */ }
-
-    ctx.fillStyle = '#9CA3AF';
-    ctx.font      = '12px sans-serif';
-    ctx.fillText('Organisé par la Famille Light of the World © 2026', contentX + 240, 410);
-
-    /* ── RIGHT STUB SECTION (840 -> 1200) ── */
-    ctx.fillStyle = '#FFFFFF';
-    ctx.fillRect(stubX, 0, W - stubX, H);
-
-    /* Right Stub Top Banner */
-    ctx.fillStyle = '#6A00C8';
-    ctx.fillRect(stubX, 0, W - stubX, 70);
-
-    ctx.fillStyle = '#FFFFFF';
-    ctx.textAlign = 'center';
-    ctx.font      = 'black 20px sans-serif';
-    ctx.fillText('TALON ACCÈS VIP', stubX + 180, 38);
-
-    ctx.fillStyle = '#FCE100';
-    ctx.font      = 'bold 12px sans-serif';
-    ctx.fillText('RESTAURATION & ÉCOUTE', stubX + 180, 58);
-
-    /* QR Code */
-    const qrImg  = await loadImg(qrUrl);
-    const qrSize = 180;
-    const qrX    = stubX + (360 - qrSize) / 2;
-    const qrY    = 90;
-
-    ctx.strokeStyle = '#6A00C8';
-    ctx.lineWidth   = 2;
-    ctx.strokeRect(qrX - 5, qrY - 5, qrSize + 10, qrSize + 10);
-    ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
-
-    /* Ticket ID */
-    ctx.fillStyle = '#31005C';
-    ctx.font      = 'black 18px sans-serif';
-    ctx.fillText(t.ticketId, stubX + 180, 305);
-
-    /* Date & Location Pill */
-    ctx.fillStyle = '#F3E8FF';
-    ctx.beginPath(); ctx.roundRect(stubX + 25, 325, 310, 75, 12); ctx.fill();
-
-    ctx.fillStyle = '#6A00C8';
-    ctx.font      = 'bold 15px sans-serif';
-    ctx.fillText('📅 14 AOÛT 2026 · 08H30', stubX + 180, 352);
-
-    ctx.fillStyle = '#111111';
-    ctx.font      = 'bold 13px sans-serif';
-    ctx.fillText('📍 HETEC DOKUI, ABIDJAN', stubX + 180, 378);
-
-    /* Status Tag */
-    ctx.fillStyle = t.status === 'VOLUNTEER' ? '#059669' : '#6A00C8';
-    ctx.beginPath(); ctx.roundRect(stubX + 40, 420, 280, 36, 18); ctx.fill();
-    ctx.fillStyle = '#FFFFFF';
-    ctx.font      = 'bold 13px sans-serif';
-    ctx.fillText(t.status === 'VOLUNTEER' ? '🤝 ÉQUIPE BÉNÉVOLE' : '✅ TOTALEMENT GRATUIT', stubX + 180, 443);
-
-    /* ── SEPARATION DASHED LINE & COUPON CUTOUT NOTCHES ── */
-    ctx.strokeStyle = '#D1D5DB';
-    ctx.lineWidth   = 2.5;
-    ctx.setLineDash([8, 8]);
-    ctx.beginPath();
-    ctx.moveTo(stubX, 0); ctx.lineTo(stubX, H);
-    ctx.stroke();
-    ctx.setLineDash([]); // Reset line dash
-
-    /* Notch cutouts */
-    ctx.fillStyle = '#111111';
-    ctx.beginPath(); ctx.arc(stubX, 0, 22, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.arc(stubX, H, 22, 0, Math.PI * 2); ctx.fill();
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -325,7 +259,7 @@ export const TicketGenerator: React.FC = () => {
       setTicket(newTicket);
       await sendToMakeWebhook(newTicket);
 
-      setTimeout(() => void renderTicket(newTicket, qrUrl), 100);
+      setTimeout(() => void renderTicket(newTicket, qrUrl, photoUrl || undefined), 100);
     } catch (err) {
       console.error(err);
       setErrorMsg('Une erreur est survenue. Veuillez réessayer.');
@@ -380,9 +314,20 @@ export const TicketGenerator: React.FC = () => {
             )}
 
             <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-dark/80 uppercase mb-1">
+                  Photo (Optionnelle)
+                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handlePhotoChange}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-violet focus:ring-2 focus:ring-violet/20 outline-none text-sm transition-all bg-white"
+                />
+              </div>
               {[
                 { name: 'name',      label: 'Nom *',            type: 'text',  placeholder: 'Ex: KOUASSI' },
-                { name: 'firstname', label: 'Prénom *',         type: 'text',  placeholder: 'Ex: Marie-Esther' },
+                { name: 'firstname', label: 'Prénom * (entrer un seul prénom)', type: 'text',  placeholder: 'Ex: Marie-Esther', pattern: '^\\S+$', title: 'Veuillez entrer un seul prénom (sans espaces)' },
                 { name: 'email',     label: 'Adresse Email *',  type: 'email', placeholder: 'Ex: marie@gmail.com' },
               ].map((field) => (
                 <div key={field.name}>
@@ -396,6 +341,8 @@ export const TicketGenerator: React.FC = () => {
                     onChange={handleInputChange}
                     placeholder={field.placeholder}
                     required={field.label.includes('*')}
+                    pattern={field.pattern}
+                    title={field.title}
                     className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-violet focus:ring-2 focus:ring-violet/20 outline-none text-sm transition-all"
                   />
                 </div>
